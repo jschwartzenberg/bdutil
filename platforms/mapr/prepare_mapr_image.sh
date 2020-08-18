@@ -134,15 +134,15 @@ function add_epel_repo() {
 # during the upgrad operation that will cause us to bail out
 # right away.
 function update_os_deb() {
-	apt-get update
+	apt-get update -o Acquire::Check-Valid-Until=false
 	# c apt-get upgrade -y -o Dpkg::Options::="--force-confdef,confold"
-	c apt-get install -y nfs-common iputils-arping libsysfs2
-	c apt-get install -y ntp
+	c apt-get install -yy --force-yes nfs-common iputils-arping libsysfs2
+	c apt-get install -yy --force-yes ntp
 
-	c apt-get install -y syslinux sdparm
-	c apt-get install -y sysstat
-	apt-get install -y dnsutils less lsof
-	apt-get install -y clustershell pdsh realpath
+	c apt-get install -yy --force-yes syslinux sdparm
+	c apt-get install -yy --force-yes sysstat
+	apt-get install -yy --force-yes dnsutils less lsof
+	apt-get install -yy --force-yes clustershell pdsh realpath
 
 	[ -f /etc/debian_version ] && touch /etc/init.d/.legacy-bootordering
 }
@@ -278,17 +278,17 @@ function update_os() {
 function install_oraclejdk_deb() {
     echo "Installing Oracle JDK (for deb distros)" >> $LOG
 
-	apt-get install -y python-software-properties
+	apt-get install -yy --force-yes python-software-properties
 	add-apt-repository -y ppa:webupd8team/java
-	apt-get update
+	apt-get update -o Acquire::Check-Valid-Until=false
 
 	echo debconf shared/accepted-oracle-license-v1-1 select true | \
 		debconf-set-selections
 	echo debconf shared/accepted-oracle-license-v1-1 seen true | \
 		debconf-set-selections
 
-	apt-get install -y x11-utils
-	apt-get install -y oracle-jdk7-installer
+	apt-get install -yy --force-yes x11-utils
+	apt-get install -yy --force-yes oracle-jdk7-installer
 	if [ $? -ne 0 ] ; then
 		echo "  Oracle JDK installation failed" >> $LOG
 		return 1
@@ -306,16 +306,16 @@ function install_oraclejdk_deb() {
 function install_openjdk_deb() {
     echo "Installing OpenJDK packages (for deb distros)" >> $LOG
 
-	apt-get install -y x11-utils
+	apt-get install -yy --force-yes x11-utils
 
 		# The GCE Debian 6 image doesn't have a repo enabled for
 		# Java 7 ... stick with Java 6 fo that version
 	deb_version=`cat /etc/debian_version`
 	if [ -n "$deb_version"  -a  "${deb_version%%.*}" = "6" ] ; then
-		apt-get install -y openjdk-6-jdk openjdk-6-doc 
+		apt-get install -yy --force-yes openjdk-6-jdk openjdk-6-doc
 		JAVA_HOME=/usr/lib/jvm/java-6-openjdk
 	else
-		apt-get install -y openjdk-7-jdk openjdk-7-doc 
+		apt-get install -yy --force-yes openjdk-7-jdk openjdk-7-doc
 		JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64
 	fi
 	export JAVA_HOME

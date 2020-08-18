@@ -137,9 +137,9 @@ function apt_get_with_warn_check() {
     # apt-get or tee failed.
     return 1
   else
-    # Check APT_GET_OUT for warnings and errors. If any lines start with W: or
+    # Check APT_GET_OUT for warnings and errors. If any lines start with
     # E: then error out.
-    if grep -e '^[WE]:' "${APT_GET_OUT}"; then
+    if grep -e '^[E]:' "${APT_GET_OUT}"; then
       return 1
     fi
   fi
@@ -166,7 +166,7 @@ function update_apt_get() {
   local sleep_time=${BDUTIL_POLL_INTERVAL_SECONDS}
   local max_attempts=30
   for ((i = 1; i <= ${max_attempts}; i++)); do
-    if apt_get_with_warn_check -y -qq update; then
+    if apt_get_with_warn_check -y -qq -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true -o APT::Get::AllowUnauthenticated=true update; then
       update_succeeded=1
       break
     else
@@ -178,7 +178,7 @@ function update_apt_get() {
   if ! (( ${update_succeeded} )); then
     echo 'Final attempt to apt-get update...'
     # Let any final error propagate all the way out to any error traps.
-    apt_get_with_warn_check -y -qq update
+    apt_get_with_warn_check -y -qq -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true -o APT::Get::AllowUnauthenticated=true update
   fi
   touch "${APT_SENTINEL}"
 }
@@ -207,6 +207,8 @@ function install_application() {
     if dpkg -s ${apt_get_package_name}; then
       echo "${apt_get_package_name} already installed."
     else
+      sed -i "/jessie main/ s|deb.debian.org|archive.debian.org|" /etc/apt/sources.list
+      sed -i "/jessie-backports/ s|deb.debian.org|archive.debian.org|" /etc/apt/sources.list.d/*
       if (( ${STRIP_EXTERNAL_MIRRORS} )); then
         echo 'Stripping external apt-get mirrors...'
         sed -i "s/.*security.debian.org.*//" /etc/apt/sources.list
@@ -217,7 +219,7 @@ function install_application() {
 
       update_apt_get_if_needed
 
-      apt-get -y -qq install ${apt_get_package_name}
+      apt-get -yy --force-yes -qq install ${apt_get_package_name}
     fi
   elif [[ -x $(which yum) ]]; then
     if rpm -q ${yum_package_name}; then
